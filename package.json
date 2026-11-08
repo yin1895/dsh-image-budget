@@ -1,6 +1,6 @@
 {
   "name": "dsh-image-budget",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "DSH 图片预算守卫：读图超预算就地降采样、上下文溢出时按字节淘汰图片、让「一张图顶半个窗口」不再炸会话。",
   "license": "MIT",
   "type": "module",
