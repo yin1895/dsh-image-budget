@@ -62,6 +62,10 @@ cp -R /tmp/dsh-image-budget ~/.dsh/profiles/desktop/node_modules/dsh-image-budge
 
 重启 DSH 生效。想先确认不会影响启动，可以加 `dryRun: true`（钩子全惰性），起来之后再去掉。
 
+> 另一个装法是把 `dsh-image-budget` 加进 profile `package.json` 的 `dsh.profile.bundles`，
+> 由包自带的 `cordis.patch.yml` 完成插入。**两种方式只能选一种**，否则同一个 `id`
+> 会被插入两次。
+
 ## 配置
 
 | 字段 | 默认 | 说明 |
