@@ -1,84 +1,17 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# @local/dsh-compaction-doctor — bundle patch (v0.2)
+# 图片预算守卫的插入行。
 #
-# Layering: this patch is applied after the shipped bundle stack, so overriding a
-# shipped row by id wins over its own defaults, and the profile's own
-# `cordis.patch.yml` still wins over this file. A patch replaces a row's whole
-# `config` (never merges into it), and `name` is an assertion: a mismatched name
-# makes the whole row be skipped instead of remounted.
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Disable the shipped compaction backend so exactly one service mounts as
-# `ctx.compaction`. The doctor engine extends `BasicCompactionEngine`, so the
-# class stays importable while its own row is off.
-- id: compaction-basic
-  name: '@deepseek-ai/dsh-compaction-basic'
-  disabled: true
-
+# 本插件不发布任何服务，只挂全局事件（tools/post-execute、
+# compaction/summary-error、agent/request-error），所以挂在 profile 根平面即可；
+# 不要挪进 preset 的 compaction 组 —— 那里被 `isolate: {compaction: true}` 圈住，
+# 只有需要提供 compaction 服务的实现才该进去。
 - insert:
-    # ── the browser half's discovery row ─────────────────────────────────────
-    # `dsh-client-modules` resolves a Loader row to its package through
-    # `exactPackageSpecifier()` (`dsh-client-modules/lib/index.js:83-89`), which
-    # returns undefined for a SUBPATH specifier. A package that declares
-    # `dsh.client` but is mounted only via `<name>/probe` / `<name>/engine` is
-    # therefore never registered as a browser module: `/plugins/<name>/client.js`
-    # 404s and none of its settings UI appears. This row gives the package its
-    # bare-name entry; `lib/index.js` is a deliberate no-op host half. Every
-    # client-half plugin on this machine does the same.
-    - id: compaction-doctor-client
-      name: '@local/dsh-compaction-doctor'
-
-    # Upstream capability probe + settings-page transport + automatic repair.
-    #
-    # This row's Config is marked `.volatile()`, which is what makes it a
-    # settings namespace and what `PUT /config {"enabled":…}` writes. The page
-    # itself is one switch; everything else here is a tuning knob for the file.
-    # Nothing is written on startup: a value is only ever corrected for a model
-    # the running session actually uses, and only while `enabled` is true.
-    - id: compaction-doctor
-      name: '@local/dsh-compaction-doctor/probe'
+    - id: image-budget
+      name: 'dsh-image-budget'
       config:
-        # ── THE SWITCH ──────────────────────────────────────────────────────
-        # The settings page is one control: this flag. Off (the default) means
-        # the plugin is completely inert — no probing, no writing, stock
-        # compaction behavior. On means: for the model the session in use is
-        # actually talking to, check once and correct the row if it disagrees
-        # with what the provider really accepts (byte-for-byte backup first).
-        # `autoRepair` (below) can only ever run while this is true.
-        enabled: false
-        autoRepair: true
-        # Optional overrides — leave them out and the plugin follows the model the
-        # session is actually talking to, locating the row to rewrite by that
-        # provider rather than by a hard-coded profile row id.
-        #
-        #   provider: <name>          # fallback route for a brand-new session
-        #   model: <name>             # (a live request/context always wins)
-        #   providerEntryId: <row id> # only if your provider row must be picked
-        #   apiKeyEnv: <ENV VAR>      # only if the row does not declare its own
-        engineEntryId: compaction-doctor-engine
-        writeConfig: false
-        overflowRecovery: true
-        capMaxTokens: 65536
-        activeProbe: false
-        activeProbeConfirm: false
-        tokensPerByte: 0.34
-        scaleMode: meter
-        maxSummaryChunks: 8
-        summaryBudgetRatio: 0.9
-        selectCapRatio: 0.85
-        writeWhenBusy: false
-
-    # Compaction engine: real-scale retention pricing + chunked hierarchical
-    # summarization + overflow classification for provider errors the harness
-    # does not decode. Policy keys here are consumed and frozen by the shipped
-    # base class, so they change only by rewriting this row (which hot-reloads).
-    - id: compaction-doctor-engine
-      name: '@local/dsh-compaction-doctor/engine'
-      config:
-        auto: true
-        thresholdRatio: 0.75
-        headroomTokens: 65536
-        retainRatio: 0.05
-        maxTokens: 65536
-        compactionRetries: 2
-        maxOverflowRetries: 2
+        maxImageBytes: 60000
+        mode: compress
+        rescueSummary: true
+        summaryKeepImageBytes: 150000
+        rescueRequest: true
+        maxRescuesPerStep: 2
+        dryRun: false

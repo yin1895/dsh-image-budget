@@ -1,12 +1,4 @@
-# real dependencies only (the test harness keeps its own stubs in test/nm/node_modules)
-/node_modules/
-
-# the harness regenerates this from lib/ on every run
-test/nm/lib/
-test/replay/lib/
-
+node_modules/
 *.log
-*.bak
-*.bak-*
-*.tmp-*
 .DS_Store
+test/.tmp/
