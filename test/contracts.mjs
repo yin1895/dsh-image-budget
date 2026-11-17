@@ -92,30 +92,57 @@ group("agent/request-error（宿主读 action?.kind）");
 group("tools/post-execute（宿主读 decision.kind）");
 {
   const ctx = boot(plugin, { maxImageBytes: 1_000_000 }, { attachments: attachmentStub() });
-  const decision = await HOST.postExecute(
-    ctx,
-    { name: "read_image", agent: { id: "a" } },
-    { isError: false, value: { path: "/nonexistent.png" } },
-    { kind: "accept", content: [{ type: "text", text: "x" }] },
-  );
-  check(decision?.kind === "accept", "kind 保持 accept", String(decision?.kind));
+  const original = { isError: false, value: { path: "/nonexistent.png" }, content: [{ type: "text", text: "x" }] };
+  const final = await HOST.postExecute(ctx, { name: "read_image", agent: { id: "a" } }, original);
+  check(final?.content?.length === 1, "未超预算：内容原样", JSON.stringify(final?.content));
 }
 {
   const ctx = boot(plugin, { maxImageBytes: 1 });
-  const original = { kind: "accept", content: [{ type: "text", text: "untouched" }] };
-  const decision = await HOST.postExecute(ctx, { name: "read" }, { isError: false }, original);
-  check(decision === original, "非 read_image 原样透传（同一个对象）");
+  const original = { isError: false, content: [{ type: "text", text: "untouched" }] };
+  const final = await HOST.postExecute(ctx, { name: "read" }, original);
+  check(final.content === original.content, "非 read_image 原样透传（同一个数组）");
 }
 {
-  // 插件自身抛错（这里用不存在的路径触发 readFile 失败）不得改变宿主决策
+  // 插件自身失败（不存在的路径 → readFile 抛错）不得改变宿主结果
   const ctx = boot(plugin, { maxImageBytes: 1 });
-  const fallback = {
-    kind: "accept",
+  const original = {
+    isError: false,
+    value: { path: "/nonexistent-dir/x.png" },
     content: [{ type: "image", attachment: { attachmentId: "a", mediaType: "image/png", bytes: 999, width: 1, height: 1 } }],
   };
-  const decision = await HOST.postExecute(ctx, { name: "read_image" }, { isError: false, value: { path: "/nonexistent-dir/x.png" } }, fallback);
-  check(decision?.kind === "accept", "内部失败时仍返回可用 decision", String(decision?.kind));
-  check(Array.isArray(decision.content), "content 仍可用");
+  const final = await HOST.postExecute(ctx, { name: "read_image" }, original);
+  check(Array.isArray(final.content) && final.content.length === 1, "内部失败时结果仍可用", JSON.stringify(final.content.map((b) => b.type)));
+}
+{
+  // **回归护栏**：内容在 result 里而不在 decision 里。
+  // 旧实现读 decision.content（默认为空），于是真机上静默不生效。
+  const ctx = boot(plugin, { maxImageBytes: 60_000, mode: "annotate" });
+  const original = {
+    isError: false,
+    value: { path: "/tmp/looks-big.png" },
+    content: [
+      { type: "text", text: "<path>/tmp/looks-big.png</path>" },
+      { type: "image", attachment: { attachmentId: "orig", mediaType: "image/png", bytes: 538_463, width: 1790, height: 1258 } },
+    ],
+  };
+  const final = await HOST.postExecute(ctx, { name: "read_image" }, original);
+  const types = final.content.map((block) => block.type).join("/");
+  check(!final.content.some((block) => block.type === "image"), "读到 result.content 并拦下超预算图", types);
+  check(/image-budget/u.test(JSON.stringify(final.content)), "留下了拦截说明");
+}
+{
+  // 前面已有监听器改写 content 时，以 decision.content 为准
+  const ctx = boot(plugin, { maxImageBytes: 60_000, mode: "annotate" });
+  ctx.on("tools/post-execute", async () => ({
+    kind: "accept",
+    content: [
+      { type: "text", text: "外层改写" },
+      { type: "image", attachment: { attachmentId: "outer", mediaType: "image/png", bytes: 700_000, width: 1790, height: 1258 } },
+    ],
+  }));
+  const original = { isError: false, value: { path: "/tmp/looks-big.png" }, content: [{ type: "text", text: "原始" }] };
+  const final = await HOST.postExecute(ctx, { name: "read_image" }, original);
+  check(!final.content.some((block) => block.type === "image"), "外层改写后的图同样被拦下", final.content.map((b) => b.type).join("/"));
 }
 
 // ── compaction/summary-error ────────────────────────────────────────────────

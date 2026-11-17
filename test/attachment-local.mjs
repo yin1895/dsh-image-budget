@@ -165,16 +165,17 @@ group("守门 × 真仓储（真 cordis 派发）");
   await (await import("node:fs/promises")).writeFile(file, fixture);
   const originalBytes = (await stat(file)).size;
 
-  const fallback = {
-    kind: "accept",
+  // 内容在 result 里（宿主的真实契约）；HOST.postExecute 返回宿主应用决策后的最终结果。
+  const original = {
+    isError: false,
+    value: { path: file },
     content: [
       { type: "text", text: `<path>${file}</path>` },
       { type: "image", attachment: { attachmentId: "original", mediaType: "image/png", bytes: originalBytes, width: 1400, height: 980 } },
     ],
   };
-  const decision = await HOST.postExecute(ctx, { name: "read_image", agent: { id: "a" } }, { isError: false, value: { path: file } }, fallback);
-  const image = decision?.content?.find((block) => block?.type === "image");
-  check(decision?.kind === "accept", "决策是 accept", String(decision?.kind));
+  const final = await HOST.postExecute(ctx, { name: "read_image", agent: { id: "a" } }, original);
+  const image = final?.content?.find((block) => block?.type === "image");
   check(image !== undefined, "结果里仍有图片块（是压缩后的副本，不是原图）");
   check(Number(image?.attachment?.bytes) <= BUDGET, "替换后的引用 ≤ 预算", String(image?.attachment?.bytes));
   check(image?.attachment?.attachmentId !== "original", "指向新附件", String(image?.attachment?.attachmentId));

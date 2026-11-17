@@ -67,13 +67,22 @@ export const HOST = {
     return { action, retry: action?.kind === "retry" };
   },
 
-  /** dsh-tools/lib/pipeline.js:668 → 430-443 */
-  async postExecute(ctx, exec, result, fallback) {
-    const decision = await ctx.waterfall({}, "tools/post-execute", exec, result, () =>
-      Promise.resolve(fallback ?? { kind: "accept" }),
-    );
-    void decision.kind; // 无保护访问
-    return decision;
+  /**
+   * dsh-tools/lib/pipeline.js:667-699。
+   *
+   * **关键**：终端默认决策是裸的 `{kind:"accept"}`，工具结果的内容在 `result.content` 里。
+   * 这个替身必须照抄这一点 —— 之前把内容塞进 fallback 决策里，导致"插件读错地方"
+   * 这类缺陷在契约测试里完全看不出来（真机 runner 才发现）。
+   * 返回的是宿主**应用决策之后**的最终结果，也就是模型真正看到的东西。
+   */
+  async postExecute(ctx, exec, result) {
+    const decision = await ctx.waterfall({}, "tools/post-execute", exec, result, () => Promise.resolve({ kind: "accept" }));
+    void decision.kind; // 宿主此处是无保护访问
+    if (Object.hasOwn(decision, "content") && Object.hasOwn(decision, "value")) {
+      throw new TypeError("tools/post-execute accept decision cannot replace both value and content");
+    }
+    // 照抄 pipeline.js:694-698 的应用步骤
+    return { ...result, ...(decision.content === undefined ? {} : { content: decision.content }) };
   },
 
   /** dsh-compaction-basic/lib/index.js:1034-1039 */

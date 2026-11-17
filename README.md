@@ -19,7 +19,7 @@ read_image ──► ① 事前守门 ──► 超预算？压到预算内换�
 
 三条保证：
 
-- **超预算的图永远不会进入上下文**（没有任何图片后端时也一样，退化成拦截）；
+- **超预算的图永远不会进入上下文**（没有任何图片后端时也一样，退化成拦截）；真机实测：538,463 B 的图被换成 31,742 B 的副本，模型看到的就是副本；
 - **压缩不会把图删掉**，只是变小（版面与标题可辨；逐字核对请裁剪）；
 - **插件自身出错一律交回下游**，绝不改变宿主的决策，也绝不截断监听器链。
 
@@ -110,6 +110,13 @@ DSH_PACKAGES_DIR=<DSH 的 node_modules> npm run test:attachment
 > `Cannot read properties of undefined (reading 'kind')`。现在 `lib/hooks.js` 的 `onWaterfall()` 把这条规则变成结构约束，`test/contracts.mjs` 的"源码护栏"再确保不会有人绕过它。
 
 CI 在 macOS / Ubuntu / Windows × Node 20 / 22 上跑 `npm test`，另有"没有 sharp"的作业验证拦截保证（`.github/workflows/test.yml`）。
+
+## 卸载
+
+用 **Plugins** 里的移除（或 `plugin_manager remove_bundle`）。命令行等价物是
+`dsh plugin --profile <name> remove <pkg>` —— 它会同时清掉 bundle 选择和依赖声明，
+卸载后 profile 正常启动。**不要**手工改 profile 的 `package.json` / `cordis.patch.yml`
+再自己跑 pnpm，那会留下需要手工清理的状态。
 
 ## 已知边界
 

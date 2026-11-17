@@ -1,5 +1,34 @@
 # 变更记录
 
+## 3.0.1 — 修掉"守门静默不生效"（只有真机 runner 才能发现）
+
+**修复**
+
+- **守门读错了地方**。宿主的 `tools/post-execute` 契约是：工具结果的**内容在
+  `result.content` 里**，终端默认决策只是裸的 `{kind:"accept"}`；监听器只有在
+  主动改写时才返回 `decision.content`。旧实现去读 `decision.content`，于是拿到
+  空数组、静默弃权 —— 真机实测：模型仍然看到 538,463 B 的原图，插件等于没装。
+  现在读 `decision.content ?? result.content`（有前置监听器改写时以前者为准）。
+- 测试替身同样修好：`HOST.postExecute` 之前把内容放进 fallback 决策里，等于把
+  这个缺陷藏起来了；现在照抄 `pipeline.js:667-699`（含决策的应用步骤），返回的是
+  宿主**应用决策之后**的最终结果 —— 也就是模型真正看到的东西。
+
+**真机验证（沙箱 profile，真模型）**
+
+| | 结果 |
+| --- | --- |
+| 修复前 | 工具结果 `image/png image, 1790x1258 px, 538463 bytes`，模型答 538463 |
+| 修复后 | 工具结果 `image/jpeg image, 900x633 px, 31742 bytes` + 换算说明，模型答 31742 |
+
+同一次 `turn_end completed`，无崩溃。538,463 B → 31,742 B（17 倍），≈490.5k → ≈28.9k token。
+
+**卸载路径（沙箱实测）**
+
+`dsh plugin --profile <name> remove <pkg>` 会同时清掉 `dsh.profile.bundles` 里的条目
+和依赖声明，卸载后 profile 正常启动 —— **不要**手工改 profile 文件再自己跑 pnpm，
+那才会留下要"深度清除"的状态。唯一残留是 `node_modules/<pkg>` 的悬空符号链接
+（惰性，不影响启动）。
+
 ## 3.0.0 — 修复 2.x 的致命缺陷，并遵循 DSH 插件规范重做
 
 **修复**
