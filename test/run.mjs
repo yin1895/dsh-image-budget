@@ -15,7 +15,7 @@ import { join } from "node:path";
 import { DEFAULTS } from "../lib/index.js";
 import { compressToBudget, describeBackends, resetSharpCache, resolveSharp, sniffMediaType } from "../lib/image.js";
 import { estimateTokens, imagesOf, looksLikeOverflow, planOffload } from "../lib/plan.js";
-import { createReporter } from "./harness.mjs";
+import { createReporter } from "./reporter.mjs";
 
 const REPORT = process.argv.includes("--report");
 /** CI 的"无图片编码器"作业用它：跳过硬采样断言，但仍验证拦截保证。 */

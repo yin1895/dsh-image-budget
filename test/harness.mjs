@@ -162,23 +162,4 @@ export function attachmentStub(overrides = {}) {
   };
 }
 
-/** 计数式断言器。 */
-export function createReporter() {
-  const results = [];
-  let failures = 0;
-  return {
-    check(ok, label, extra = "") {
-      results.push({ ok, label, extra });
-      if (!ok) failures += 1;
-      console.log(`  ${ok ? "ok  " : "FAIL"} ${label}${extra ? ` — ${extra}` : ""}`);
-    },
-    group(title) {
-      console.log(`\n${title}`);
-    },
-    finish() {
-      const passed = results.filter((result) => result.ok).length;
-      console.log(`\n${passed}/${results.length} passed${failures === 0 ? "" : `, ${failures} failing`}`);
-      return failures;
-    },
-  };
-}
+export { createReporter } from "./reporter.mjs";
