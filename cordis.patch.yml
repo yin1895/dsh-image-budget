@@ -9,9 +9,3 @@
       name: 'dsh-image-budget'
       config:
         maxImageBytes: 60000
-        mode: compress
-        rescueSummary: true
-        summaryKeepImageBytes: 150000
-        rescueRequest: true
-        maxRescuesPerStep: 2
-        dryRun: false

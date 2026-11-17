@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" role="img" aria-label="Image budget guard">
+  <defs>
+    <mask id="imageBudgetFrameCut">
+      <rect width="36" height="36" fill="#000"/>
+      <rect x="4.5" y="8.5" width="20" height="15" rx="2.5" fill="#fff"/>
+      <circle cx="10.6" cy="13.6" r="1.7" fill="#000"/>
+      <path d="M4.5 19.6 L10.4 14.4 L15.1 18.6 L19.2 15.2 L24.5 20.1 L24.5 21 L4.5 21 Z" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="2.5" y="6.5" width="24" height="19" rx="3.5" fill="none" stroke="#5b7cc4" stroke-width="3"/>
+  <circle cx="10.6" cy="13.6" r="1.7" fill="#5b7cc4"/>
+  <path d="M4.5 19.6 L10.4 14.4 L15.1 18.6 L19.2 15.2 L24.5 20.1 L24.5 21 L4.5 21 Z" fill="#5b7cc4"/>
+  <g fill="#7a8ba8">
+    <rect x="28" y="26.2" width="6" height="2.6" rx="1.3"/>
+    <rect x="25.4" y="30.4" width="11.2" height="2.6" rx="1.3"/>
+  </g>
+  <path d="M28.4 10.4 L33.6 10.4 L31 17.2 Z" fill="#7a8ba8"/>
+  <rect x="30.7" y="4.6" width="2.6" height="5.2" rx="1.3" fill="#7a8ba8"/>
+</svg>

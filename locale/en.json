@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Image budget guard",
+    "description": "Downscales oversized images before they enter the context, and drops the largest images from the surface when a request or a summary overflows. One big screenshot otherwise costs about 0.91 tokens per byte while the token meter prices it structurally, so compaction never fires in time and /compact can never succeed.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -10,7 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  matrix:
+  # 单元测试 + 宿主契约测试。
+  # 契约测试用真正的 @deepseek-ai/cordis（npm 可得，版本与安装的 DSH 一致），
+  # 照抄宿主四个派发站点验证监听器的返回契约。
+  suite:
     name: ${{ matrix.os }} / node ${{ matrix.node }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -46,3 +49,18 @@ jobs:
           node-version: 22
       - run: npm install --omit=dev --no-audit --no-fund
       - run: node test/run.mjs --no-backend-ok
+
+  # 与真实附件仓储的集成测试需要 DSH 自己的包（不在 npm 上），
+  # 所以在 CI 里只做语法检查；本地用 `npm run test:attachment` 跑真链路。
+  attachment-test-syntax:
+    name: attachment integration test (syntax)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check test/attachment-local.mjs
+      - run: node --check test/contracts.mjs
+      - run: node --check test/harness.mjs
+      - run: node --check lib/index.js && node --check lib/hooks.js && node --check lib/image.js && node --check lib/plan.js

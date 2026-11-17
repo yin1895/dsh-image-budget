@@ -1,18 +1,24 @@
 {
   "name": "dsh-image-budget",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "DSH 图片预算守卫：读图超预算就地降采样、上下文溢出时按字节淘汰图片、让「一张图顶半个窗口」不再炸会话。",
   "license": "MIT",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./hooks": "./lib/hooks.js",
     "./plan": "./lib/plan.js",
     "./image": "./lib/image.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
+    "locale",
+    "docs",
+    "icon.svg",
     "cordis.patch.yml",
     "README.md",
     "LICENSE"
@@ -41,7 +47,8 @@
     },
     "compatibility": {
       "dshReleases": {
-        "0.2.1-rc.3": "compatible"
+        "0.2.1-rc.3": "compatible",
+        "0.2.2-rc.3": "compatible"
       }
     }
   },
@@ -54,14 +61,19 @@
     }
   },
   "devDependencies": {
+    "@deepseek-ai/cordis": "4.1.0",
     "sharp": "^0.35.5"
   },
   "scripts": {
-    "test": "node test/run.mjs",
+    "test": "node test/run.mjs && node test/contracts.mjs",
+    "test:unit": "node test/run.mjs",
+    "test:contracts": "node test/contracts.mjs",
+    "test:attachment": "node test/attachment-local.mjs",
     "test:report": "node test/run.mjs --report"
   },
   "engines": {
     "node": ">=18"
   },
-  "dshTarget": "0.2.1-rc.3"
+  "dshTarget": "0.2.2-rc.3",
+  "icon": "icon.svg"
 }
